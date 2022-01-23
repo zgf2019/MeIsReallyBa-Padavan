@@ -64,7 +64,6 @@ flush_r() {
 		done
 	}
 	sed -i '/dnsmasq.dom/d' /etc/storage/dnsmasq/dnsmasq.conf
-	rm -rf /tmp/dnsmasq.dom
 	flush_iptables nat
 	flush_iptables mangle
 	ip rule del fwmark 100 lookup 100 2>/dev/null
@@ -105,7 +104,13 @@ EOF
 	$ipt_n -A SS_SPEC_WAN_AC -j SS_SPEC_WAN_FW
 	$ipt_n -I SS_SPEC_WAN_AC 1 -d $server -j RETURN
 	$ipt_n -I PREROUTING $SSNU -j SS_SPEC_WAN_AC
-
+	if [ ! -f "/etc/storage/gfwlist/gfwlist_listnew.conf" ] ; then
+	mkdir -p /etc/storage/gfwlist
+	cp -rf /etc_ro/gfwlist_list.conf /etc/storage/gfwlist/gfwlist_listnew.conf
+	fi
+	if [ ! -f "/tmp/dnsmasq.dom/gfwlist_list.conf" ] ; then
+	lua /etc_ro/ss/gfwcreate.lua
+	fi
 	elif [ "$RUNMODE" = "gfw" ] ;then
 	ipset -N gfwlist hash:net 2>/dev/null
 	$ipt_n -N SS_SPEC_WAN_AC
@@ -113,11 +118,13 @@ EOF
 	$ipt_n -A SS_SPEC_WAN_AC -m set --match-set smartdns dst -j SS_SPEC_WAN_FW
 	$ipt_n -I SS_SPEC_WAN_AC 1 -d $server -j RETURN
 	$ipt_n -I PREROUTING $SSNU -j SS_SPEC_WAN_AC
-	if [ ! -f "/etc/storage/gfwlist/gfwlist_list.conf" ] ; then
+	if [ ! -f "/etc/storage/gfwlist/gfwlist_listnew.conf" ] ; then
 	mkdir -p /etc/storage/gfwlist
-	cp -rf /etc_ro/gfwlist_list.conf /etc/storage/gfwlist/gfwlist_list.conf
+	cp -rf /etc_ro/gfwlist_list.conf /etc/storage/gfwlist/gfwlist_listnew.conf
 	fi
-	awk '{printf("server=/%s/127.0.0.1#5353\nipset=/%s/gfwlist\n", $1, $1 )}' /etc/storage/gfwlist/gfwlist_list.conf > /tmp/dnsmasq.dom/gfwlist_list.conf
+	if [ ! -f "/tmp/dnsmasq.dom/gfwlist_list.conf" ] ; then
+	lua /etc_ro/ss/gfwcreate.lua
+	fi
 	elif [ "$RUNMODE" = "oversea" ] ;then
 	ipset -N oversea hash:net 2>/dev/null
 	$ipt_n -N SS_SPEC_WAN_AC

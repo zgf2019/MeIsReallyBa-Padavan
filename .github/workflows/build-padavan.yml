@@ -38,7 +38,7 @@ jobs:
         mkdir -p /opt/images/
     - name: Build Firmware
       env:
-        TNAME: NEWIFI3
+        TNAME: JCG-Y2
       run: |
         cd /opt/rt-n56u/trunk
         if [ ! -f configs/templates/$TNAME.config ] ; then
@@ -96,5 +96,5 @@ jobs:
       uses: actions/upload-artifact@master
       if: always()
       with:
-        name: Padavan-packages-NEWIFI3
+        name: Padavan-packages-JCG-Y2
         path: /opt/images
